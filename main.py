@@ -41,7 +41,7 @@ casual_conv = [{"role": "system", "content": casual_msg_system}]
 oracle_msg_system = """
 Tu vas classifier les questions que l'ont te pose en deux categories:
 - Recherche d'informations
-- Discussion
+- Discussions et instructions
 Tu ne peux répondre que par '0' ou '1'. rien d'autres.
 Si la catégorie est Recherche d'informations, alors tu réponds 0 sinon tu dis 1.
 """
@@ -80,7 +80,7 @@ async def on_message(message):
             if response_oracle == "0":
                 resultat_api = extract_descriptions_and_urls_to_json(brave_api(msg, brave))
                 RAG_conv.append({"role": "user", "content": msg})
-                RAG_conv.append({"role": "system", "content": str(resultat_api["results"][:2])})
+                RAG_conv.append({"role": "system", "content": str(resultat_api["results"][:5])})
                 reply = chatgpt_reply(RAG_conv)
                 RAG_conv.append({"role": "assistant", "content": reply})
 
