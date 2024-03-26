@@ -1,10 +1,11 @@
 import openai
 import discord
 import yaml
-import json
-import requests
 from components.Brave import brave_api, extract_descriptions_and_urls_to_json
 from components.agents import chatgpt_reply
+
+# Load credentials from .cred.yml
+# resorting to yml file because dotenv is not working ATM
 
 with open(".cred.yml", "r") as stream:
     try:
@@ -17,13 +18,14 @@ openai.api_key = cred["OPENAI_API_TOKEN"]
 brave = cred["BRAVE_TOKEN"]
 
 
-
-
-RAG_msg_system = """Tu es LacDuSchultz, tu es un cygne majestueux qui navigue sur l'océan 
+# set up agents persona and role
+RAG_msg_system = """Tu es LacDuSchultz, 
+tu es un cygne majestueux qui navigue sur l'océan 
 infini de notre discord.
 Tu finiras toutes tes réponses par 'Couack!' précédé d'un emoji canard.
 Tu es là pour répondre du mieux possible aux questions des gens.
-Si tu n'as pas la réponse, tu peux synthétiser les resultats sérialisés qui te seront fournis pour répondre aux questions.
+Si tu n'as pas la réponse, tu peux synthétiser les resultats sérialisés 
+qui te seront fournis pour répondre aux questions.
 Cite les sources et les liens dès que possible.
 """
 
@@ -43,7 +45,8 @@ Tu vas classifier les questions que l'ont te pose en deux categories:
 - Recherche d'informations
 - Discussions et instructions
 Tu ne peux répondre que par '0' ou '1'. rien d'autres.
-Si la catégorie est Recherche d'informations, alors tu réponds 0 sinon tu dis 1.
+Si la catégorie est Recherche d'informations, 
+alors tu réponds 0 sinon tu dis 1.
 """
 oracle_conv = [{"role": "system", "content": oracle_msg_system}]
 
@@ -53,16 +56,15 @@ intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 
 
-
 # log
 @client.event
-async def on_ready():
+async def on_ready() -> None:
     print("Logged as {0.user}".format(client))
 
 
 # answerer
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message) -> None:
     if message.author == client.user:
         return
 
@@ -77,14 +79,20 @@ async def on_message(message):
             oracle_prompt.append({"role": "user", "content": msg})
             response_oracle = chatgpt_reply(oracle_prompt)
             print(response_oracle)
+
             if response_oracle == "0":
-                resultat_api = extract_descriptions_and_urls_to_json(brave_api(msg, brave))
+                resultat_api = extract_descriptions_and_urls_to_json(
+                    brave_api(msg, brave)
+                )
                 RAG_conv.append({"role": "user", "content": msg})
-                RAG_conv.append({"role": "system", "content": str(resultat_api["results"][:5])})
+                RAG_conv.append(
+                    {"role": "system", 
+                     "content": str(resultat_api["results"][:5])}
+                )
                 reply = chatgpt_reply(RAG_conv)
                 RAG_conv.append({"role": "assistant", "content": reply})
 
-            else :
+            else:
                 casual_conv.append({"role": "user", "content": msg})
                 reply = chatgpt_reply(casual_conv)
                 casual_conv.append({"role": "assistant", "content": reply})
@@ -100,7 +108,3 @@ async def on_message(message):
 
 # lancement de l'appli
 client.run(token)
-
-
-
-
