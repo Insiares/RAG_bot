@@ -44,6 +44,7 @@ def extract_descriptions_and_urls_to_json(json_data: json) -> list[dict]:
     for result in results[:3]:
         description = result.get("description")
         url = result.get("url")
+
         body = extract_body(url)
         output_data["results"].append(
             {"description": description, "url": url, "body": body[:2500]}
@@ -59,11 +60,15 @@ def extract_body(url: str) -> str:
     Returns:
         str: body
     """
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content.decode("utf-8"), "html.parser")
-    body = soup.body.text
-    body = body.replace(r'\n', r'').replace(r'\t', '')
-    normalized_text = re.sub(r'\s+', ' ', body).strip()
-    normalized_text = re.sub(r'\${.*?}', '', normalized_text).strip()
+    try:
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content.decode("utf-8"), "html.parser")
+        body = soup.body.text
+        body = body.replace(r'\n', r'').replace(r'\t', '')
+        normalized_text = re.sub(r'\s+', ' ', body).strip()
+        normalized_text = re.sub(r'\${.*?}', '', normalized_text).strip()
+    except AttributeError as e:
+        print(e)
+        normalized_text = ""
 
     return normalized_text
