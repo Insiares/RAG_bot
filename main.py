@@ -2,7 +2,7 @@ import openai
 import discord
 import yaml
 from components.Brave import brave_api, extract_descriptions_and_urls_to_json
-from components.agents import chatgpt_reply
+from components.agents import chatgpt_reply, visiongpt_reply
 
 # Load credentials from .cred.yml
 # resorting to yml file because dotenv is not working ATM
@@ -74,28 +74,38 @@ async def on_message(message: discord.Message) -> None:
         and message.mention_everyone is False
     ):
         async with message.channel.typing():
-            msg = message.content
-            oracle_prompt = oracle_conv.copy()
-            oracle_prompt.append({"role": "user", "content": msg})
-            response_oracle = chatgpt_reply(oracle_prompt)
-            print(response_oracle)
-
-            if response_oracle == "0":
-                resultat_api = extract_descriptions_and_urls_to_json(
-                    brave_api(msg, brave)
-                )
-                RAG_conv.append({"role": "user", "content": msg})
-                RAG_conv.append(
-                    {"role": "system", 
-                     "content": str(resultat_api["results"][:5])}
-                )
-                reply = chatgpt_reply(RAG_conv)
-                RAG_conv.append({"role": "assistant", "content": reply})
-
+            # image route
+            if message.attachments:
+                # reply = "Veuillez ne pas envoyer de fichiers, je ne suis pas encore prêt ! :)"
+                reply = visiongpt_reply([{"role": "user", "content": [
+                    {"type": "text", "text": message.content},
+                    {"image_url": message.attachments[0].url, "type": "image_url"}]}])
+            # text route
             else:
-                casual_conv.append({"role": "user", "content": msg})
-                reply = chatgpt_reply(casual_conv)
-                casual_conv.append({"role": "assistant", "content": reply})
+                
+                msg = message.content
+                oracle_prompt = oracle_conv.copy()
+                oracle_prompt.append({"role": "user", "content": msg})
+                response_oracle = chatgpt_reply(oracle_prompt) 
+                # TODO :limit tokens
+                print(response_oracle)
+                # RAG route
+                if response_oracle == "0":
+                    resultat_api = extract_descriptions_and_urls_to_json(
+                        brave_api(msg, brave)
+                    )
+                    RAG_conv.append({"role": "user", "content": msg})
+                    RAG_conv.append(
+                        {"role": "system",
+                         "content": str(resultat_api["results"][:5])}
+                    )
+                    reply = chatgpt_reply(RAG_conv)
+                    RAG_conv.append({"role": "assistant", "content": reply})
+                # Conversation route
+                else:
+                    casual_conv.append({"role": "user", "content": msg})
+                    reply = chatgpt_reply(casual_conv)
+                    casual_conv.append({"role": "assistant", "content": reply})
 
         await message.reply(reply, mention_author=True)
         # if the current_conv contains more than 10 messages, pop 2 messages

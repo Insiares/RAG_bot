@@ -15,3 +15,18 @@ def chatgpt_reply(conv: list[dict]) -> str:
     )
 
     return completion["choices"][0]["message"]["content"]
+
+def visiongpt_reply(conv: list[dict]) -> str:
+    '''conversational agent for gptvision
+
+    Args:
+        conv (list[str]): list of messages
+
+    Returns:
+        str: response from chatgpt
+    '''
+    completion = openai.ChatCompletion.create(
+        model="gpt-4-vision-preview", messages=conv, temperature=0.7
+    )
+
+    return completion["choices"][0]["message"]["content"]
