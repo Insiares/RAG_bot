@@ -1,32 +1,19 @@
 import openai
 
 
-def chatgpt_reply(conv: list[dict]) -> str:
+def chatgpt_reply(mode: str, conv: list[dict], temp: float = 0.7) -> str:
     '''conversational agent for chatgpt
 
     Args:
+        mode (str): gpt-3.5-turbo or gpt-4
+        temp (float): temperature
         conv (list[str]): list of messages
 
     Returns:
         str: response from chatgpt
     '''
     completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo", messages=conv, temperature=0.7
-    )
-
-    return completion["choices"][0]["message"]["content"]
-
-def visiongpt_reply(conv: list[dict]) -> str:
-    '''conversational agent for gptvision
-
-    Args:
-        conv (list[str]): list of messages
-
-    Returns:
-        str: response from chatgpt
-    '''
-    completion = openai.ChatCompletion.create(
-        model="gpt-4-vision-preview", messages=conv, temperature=0.7
+        model=mode, messages=conv, temperature=temp
     )
 
     return completion["choices"][0]["message"]["content"]

@@ -2,7 +2,7 @@ import openai
 import discord
 import yaml
 from components.Brave import brave_api, extract_descriptions_and_urls_to_json
-from components.agents import chatgpt_reply, visiongpt_reply
+from components.agents import chatgpt_reply
 
 # Load credentials from .cred.yml
 # resorting to yml file because dotenv is not working ATM
@@ -42,15 +42,20 @@ casual_conv = [{"role": "system", "content": casual_msg_system}]
 
 oracle_msg_system = """
 Tu vas classifier les questions que l'ont te pose en deux categories:
-- Recherche d'informations
-- Discussions et instructions
+- Recherche d'informations:
+L'utilisateur te pose une question très précise et/ou technique qui nécessite
+des informations en plus de tes connaissances actuelles.
+- Discussions et instructions:
+L'utilisateur cherche seulement à converser avec toi et te demande de générer
+des textes ou autres.
 Tu ne peux répondre que par '0' ou '1'. rien d'autres.
-Si la catégorie est Recherche d'informations, 
-alors tu réponds 0 sinon tu dis 1.
+Si la catégorie est Recherche d'informations,
+alors tu réponds 0 sinon tu réponds 1.
 """
 oracle_conv = [{"role": "system", "content": oracle_msg_system}]
 
-
+history = [{"role": "system",
+            "content": "voici l'historique de la conversion:"}]
 # connect to discord
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
@@ -75,18 +80,31 @@ async def on_message(message: discord.Message) -> None:
     ):
         async with message.channel.typing():
             # image route
+            conv = []
             if message.attachments:
-                # reply = "Veuillez ne pas envoyer de fichiers, je ne suis pas encore prêt ! :)"
-                reply = visiongpt_reply([{"role": "user", "content": [
-                    {"type": "text", "text": message.content},
-                    {"image_url": message.attachments[0].url, "type": "image_url"}]}])
+                vision_input = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": message.content},
+                            {
+                                "image_url": message.attachments[0].url,
+                                "type": "image_url",
+                            },
+                        ],
+                    }
+                ]
+                reply = chatgpt_reply(
+                    mode="gpt-4-vision-preview", conv=vision_input, temp=0.7
+                )
             # text route
             else:
-                
                 msg = message.content
                 oracle_prompt = oracle_conv.copy()
                 oracle_prompt.append({"role": "user", "content": msg})
-                response_oracle = chatgpt_reply(oracle_prompt) 
+                response_oracle = chatgpt_reply(
+                    mode="gpt-3.5-turbo", conv=oracle_prompt, temp=0
+                )
                 # TODO :limit tokens
                 print(response_oracle)
                 # RAG route
@@ -94,26 +112,29 @@ async def on_message(message: discord.Message) -> None:
                     resultat_api = extract_descriptions_and_urls_to_json(
                         brave_api(msg, brave)
                     )
-                    RAG_conv.append({"role": "user", "content": msg})
-                    RAG_conv.append(
+                    history.append({"role": "user", "content": msg})
+                    history.append(
                         {"role": "system",
                          "content": str(resultat_api["results"][:5])}
                     )
-                    reply = chatgpt_reply(RAG_conv)
-                    RAG_conv.append({"role": "assistant", "content": reply})
+                    conv = RAG_conv.copy()
+                    conv.extend(history)
+                    reply = chatgpt_reply(mode="gpt-3.5-turbo", conv=conv)
+                    history.append({"role": "assistant", "content": reply})
                 # Conversation route
                 else:
-                    casual_conv.append({"role": "user", "content": msg})
-                    reply = chatgpt_reply(casual_conv)
-                    casual_conv.append({"role": "assistant", "content": reply})
+                    history.append({"role": "user", "content": msg})
+                    conv = casual_conv.copy()
+                    conv.extend(history)
+                    reply = chatgpt_reply(mode="gpt-3.5-turbo", conv=conv)
+                    history.append({"role": "assistant", "content": reply})
 
         await message.reply(reply, mention_author=True)
         # if the current_conv contains more than 10 messages, pop 2 messages
-        for conv in [RAG_conv, casual_conv]:
-            if len(conv) > 10:
-                conv.pop(0)
-                conv.pop(0)
-                conv.pop(0)
+        print(history)
+        if len(history) > 10:
+            history.pop(1)
+            history.pop(1)
 
 
 # lancement de l'appli
