@@ -134,7 +134,7 @@ async def on_message(message: discord.Message) -> None:
         if len(reply) > 2000:
             reply = reply[:1995] + "..."
         await message.reply(reply, mention_author=True)
-        # if the current_conv contains more than 10 messages, pop 2 messages
+        # if the history contains more than 10 messages, pop 2 messages
         print(history)
         if len(history) > 10:
             history.pop(1)

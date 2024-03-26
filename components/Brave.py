@@ -1,6 +1,7 @@
 import requests
 import json
 from bs4 import BeautifulSoup
+import re
 # from .Selenium import selenium_scraping
 
 
@@ -61,5 +62,8 @@ def extract_body(url: str) -> str:
     response = requests.get(url)
     soup = BeautifulSoup(response.content.decode("utf-8"), "html.parser")
     body = soup.body.text
-    body = body.replace("\\n", "")
-    return body
+    body = body.replace(r'\n', r'').replace(r'\t', '')
+    normalized_text = re.sub(r'\s+', ' ', body).strip()
+    normalized_text = re.sub(r'\${.*?}', '', normalized_text).strip()
+
+    return normalized_text
