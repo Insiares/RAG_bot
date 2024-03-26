@@ -1,9 +1,11 @@
 import requests
 import json
+from bs4 import BeautifulSoup
+# from .Selenium import selenium_scraping
 
 
 def brave_api(msg: str, brave: str) -> json:
-    '''request constructor for brave api
+    """request constructor for brave api
 
     Args:
         msg (str): user message
@@ -11,7 +13,7 @@ def brave_api(msg: str, brave: str) -> json:
 
     Returns:
         json: json response from brave api
-    '''
+    """
     url = "https://api.search.brave.com/res/v1/web/search"
 
     querystring = {"q": msg}
@@ -27,19 +29,37 @@ def brave_api(msg: str, brave: str) -> json:
 
 
 def extract_descriptions_and_urls_to_json(json_data: json) -> list[dict]:
-    '''extract descriptions and urls from json data
+    """extract descriptions and urls from json data
 
     Args:
         json_data (json): json data from brave api
 
     Returns:
         list[dict]: list of dictionaries with descriptions and urls
-    '''
+    """
     results = json_data.get("web", {}).get("results", [])
 
     output_data = {"results": []}
-    for result in results:
+    for result in results[:3]:
         description = result.get("description")
         url = result.get("url")
-        output_data["results"].append({"description": description, "url": url})
+        body = extract_body(url)
+        output_data["results"].append(
+            {"description": description, "url": url, "body": body[:2500]}
+        )
     return output_data
+
+
+def extract_body(url: str) -> str:
+    """extract body from url
+    Args:
+        url (str): url
+
+    Returns:
+        str: body
+    """
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content.decode("utf-8"), "html.parser")
+    body = soup.body.text
+    body = body.replace("\\n", "")
+    return body

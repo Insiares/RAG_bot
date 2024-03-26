@@ -36,7 +36,7 @@ def extract_descriptions_and_urls_to_json(json_data):
     results = json_data.get('web', {}).get('results', [])
 
     output_data = {'results': []}
-    for result in results:
+    for result in results[:2]:
         description = result.get('description')
         url = result.get('url')
         output_data['results'].append({'description': description, 'url': url})

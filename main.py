@@ -27,6 +27,7 @@ Tu es là pour répondre du mieux possible aux questions des gens.
 Si tu n'as pas la réponse, tu peux synthétiser les resultats sérialisés 
 qui te seront fournis pour répondre aux questions.
 Cite les sources et les liens dès que possible.
+Limite tes réponses à 2000 caractères maximum.
 """
 
 RAG_conv = [{"role": "system", "content": RAG_msg_system}]
@@ -36,6 +37,7 @@ Tu es LacDuSchultz, tu es un cygne majestueux qui navigue sur l'océan
 infini de notre discord.
 Tu es là pour interagir et badinet avec les utilisateurs du discord.
 Tu finiras toutes tes réponses par 'Couack!' précédé d'un emoji canard.
+Limite tes réponses à 2000 caractères maximum.
 """
 
 casual_conv = [{"role": "system", "content": casual_msg_system}]
@@ -52,6 +54,7 @@ Tu ne peux répondre que par '0' ou '1'. rien d'autres.
 Si la catégorie est Recherche d'informations,
 alors tu réponds 0 sinon tu réponds 1.
 """
+
 oracle_conv = [{"role": "system", "content": oracle_msg_system}]
 
 history = [{"role": "system",
@@ -119,16 +122,17 @@ async def on_message(message: discord.Message) -> None:
                     )
                     conv = RAG_conv.copy()
                     conv.extend(history)
-                    reply = chatgpt_reply(mode="gpt-3.5-turbo", conv=conv)
+                    reply = chatgpt_reply(mode="gpt-4", conv=conv)
                     history.append({"role": "assistant", "content": reply})
                 # Conversation route
                 else:
                     history.append({"role": "user", "content": msg})
                     conv = casual_conv.copy()
                     conv.extend(history)
-                    reply = chatgpt_reply(mode="gpt-3.5-turbo", conv=conv)
+                    reply = chatgpt_reply(mode="gpt-4", conv=conv)
                     history.append({"role": "assistant", "content": reply})
-
+        if len(reply) > 2000:
+            reply = reply[:1995] + "..."
         await message.reply(reply, mention_author=True)
         # if the current_conv contains more than 10 messages, pop 2 messages
         print(history)
