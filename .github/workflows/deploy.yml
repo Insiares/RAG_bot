@@ -39,5 +39,7 @@ jobs:
         --resource-group devia_25 \
         --name ragbotcontainer \
         --image BorisRagbot.azurecr.io/ragbot:latest \
+        --registry-username BorisRagbot \
+        --registry-password $(az acr credential show --name BorisRagbot --query passwords[0].value -o tsv) \
         --cpu 1 \
         --memory 1.5
