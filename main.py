@@ -1,31 +1,33 @@
 import openai
 import discord
-import yaml
+import os
 from components.Brave import brave_api, extract_descriptions_and_urls_to_json
 from components.agents import chatgpt_reply
 
 # Load credentials from .cred.yml
 # resorting to yml file because dotenv is not working ATM
 
-with open(".cred.yml", "r") as stream:
-    try:
-        cred = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
+# Extraction of credentials from env variables
 
+cred = {
+    "BOT_TOKEN": os.environ.get("BOT_TOKEN"),
+    "OPENAI_API_TOKEN": os.environ.get("OPENAI_API_TOKEN"),
+    "BRAVE_TOKEN": os.environ.get("BRAVE_TOKEN"),
+}
+print(cred)
 token = cred["BOT_TOKEN"]
 openai.api_key = cred["OPENAI_API_TOKEN"]
 brave = cred["BRAVE_TOKEN"]
 
 
 # set up agents persona and role
-RAG_msg_system = """Tu es LacDuSchultz, 
-tu es un cygne majestueux qui navigue sur l'océan 
-infini de notre discord.
+RAG_msg_system = """Tu es LacDuSchultz,
+tu es un cygne majestueux qui navigue sur l'océan
+ infini de notre discord.
 Tu finiras toutes tes réponses par 'Couack!' précédé d'un emoji canard.
 Tu es là pour répondre du mieux possible aux questions des gens.
-Si tu n'as pas la réponse, tu peux synthétiser les resultats sérialisés 
-qui te seront fournis pour répondre aux questions.
+Si tu n'as pas la réponse, tu peux synthétiser les resultats sérialisés
+ qui te seront fournis pour répondre aux questions.
 Cite les sources et les liens dès que possible.
 Limite tes réponses à 2000 caractères maximum.
 """
@@ -33,8 +35,8 @@ Limite tes réponses à 2000 caractères maximum.
 RAG_conv = [{"role": "system", "content": RAG_msg_system}]
 
 casual_msg_system = """
-Tu es LacDuSchultz, tu es un cygne majestueux qui navigue sur l'océan 
-infini de notre discord.
+Tu es LacDuSchultz, tu es un cygne majestueux qui navigue sur l'océan
+ infini de notre discord.
 Tu es là pour interagir et badinet avec les utilisateurs du discord.
 Tu finiras toutes tes réponses par 'Couack!' précédé d'un emoji canard.
 Limite tes réponses à 2000 caractères maximum.
