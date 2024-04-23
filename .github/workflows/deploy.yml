@@ -42,8 +42,8 @@ jobs:
         --registry-username BorisRagbot \
         --registry-password $(az acr credential show --name BorisRagbot --query passwords[0].value -o tsv) \
         --environment-variables \
-          BOT_TOKEN= ${{ secrets.BOT_TOKEN }} \
+          "BOT_TOKEN= ${{ secrets.BOT_TOKEN }} \
           OPENAI_API_TOKEN= ${{ secrets.OPENAI_API_TOKEN }} \
-          BRAVE_TOKEN=  ${{ secrets.BRAVE_TOKEN }} \
+          BRAVE_TOKEN=  ${{ secrets.BRAVE_TOKEN }}" \
         --cpu 1 \
         --memory 1.5
