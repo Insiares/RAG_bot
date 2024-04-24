@@ -19,7 +19,6 @@ token = cred["BOT_TOKEN"]
 openai.api_key = cred["OPENAI_API_TOKEN"]
 brave = cred["BRAVE_TOKEN"]
 
-
 # set up agents persona and role
 RAG_msg_system = """Tu es LacDuSchultz,
 tu es un cygne majestueux qui navigue sur l'océan
@@ -124,14 +123,14 @@ async def on_message(message: discord.Message) -> None:
                     )
                     conv = RAG_conv.copy()
                     conv.extend(history)
-                    reply = chatgpt_reply(mode="gpt-4", conv=conv)
+                    reply = chatgpt_reply(mode="gpt-3.5-turbo", conv=conv)
                     history.append({"role": "assistant", "content": reply})
                 # Conversation route
                 else:
                     history.append({"role": "user", "content": msg})
                     conv = casual_conv.copy()
                     conv.extend(history)
-                    reply = chatgpt_reply(mode="gpt-4", conv=conv)
+                    reply = chatgpt_reply(mode="gpt-3.5-turbo", conv=conv)
                     history.append({"role": "assistant", "content": reply})
         if len(reply) > 2000:
             reply = reply[:1995] + "..."
