@@ -14,7 +14,7 @@ cred = {
     "OPENAI_API_TOKEN": os.environ.get("OPENAI_API_TOKEN"),
     "BRAVE_TOKEN": os.environ.get("BRAVE_TOKEN"),
 }
-print(cred)
+
 token = cred["BOT_TOKEN"]
 openai.api_key = cred["OPENAI_API_TOKEN"]
 brave = cred["BRAVE_TOKEN"]

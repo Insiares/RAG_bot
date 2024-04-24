@@ -16,4 +16,5 @@ def chatgpt_reply(mode: str, conv: list[dict], temp: float = 0.7) -> str:
         model=mode, messages=conv, temperature=temp
     )
 
+    print(f'tokens : {completion["usage"]["total_tokens"]} using {mode}')
     return completion["choices"][0]["message"]["content"]
